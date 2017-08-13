@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify
+from app import create_app
 import os
 
 config_name = os.getenv('APP_SETTINGS')
