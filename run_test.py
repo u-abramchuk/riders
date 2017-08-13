@@ -9,10 +9,10 @@ class AppTestCase(unittest.TestCase):
         self.client = self.app.test_client
         self.single_record = {
             'user_id': '1',
-            'from_lat': '40.745392',
-            'from_lon': '-73.978364',
-            'to_lat': '41.308273',
-            'to_lon': '-72.927887'
+            'from_lat': 40.745392,
+            'from_lon': -73.978364,
+            'to_lat': 41.308273,
+            'to_lon': -72.927887
         }
 
     def test_store(self):
