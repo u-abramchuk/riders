@@ -1,0 +1,12 @@
+{
+    "python.linting.pylintEnabled": false,
+    "python.pythonPath": "${workspaceRoot}/venv/bin/python",
+    "python.unitTest.unittestArgs": [
+        "-v",
+        "-s",
+        ".",
+        "-p",
+        "*_test.py"
+    ],
+    "python.unitTest.unittestEnabled": true
+}
