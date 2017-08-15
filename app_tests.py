@@ -2,7 +2,8 @@ import unittest
 import json
 from app import create_app
 import pandas
-# from scipy.spatial.distance import pdist
+from scipy.spatial.distance import pdist
+
 
 class AppTestCase(unittest.TestCase):
     def setUp(self):
@@ -29,7 +30,7 @@ class AppTestCase(unittest.TestCase):
             self.assertEqual(response.status_code, 201)
         self.assertEqual(len(self.app.rides['1']), self.app.N)
 
-    def test_pdist(self):
+    def test_stats(self):
         self.app.rides = {
             '1': [{
                 'user_id': '1',
@@ -54,19 +55,11 @@ class AppTestCase(unittest.TestCase):
             }]
         }
         self.app.N = 10
+        expected = b'from_lat,from_lon,to_lat,to_lon,user_id\n40.745392,-73.978364,41.308273,-72.927887,1\n50.745392,-73.978364,41.308273,-72.927887,2\n30.745392,-73.978364,41.308273,-72.927887,1\n'
 
-        all_records = [point for user_id in self.app.rides
-                       for record in self.app.rides[user_id]
-                       for point in [
-                           {'lat': record['from_lat'], 'lon': record['from_lon'],
-                            'user_id': record['user_id'], 'point': 'from'},
-                           {'lat': record['to_lat'], 'lon': record['to_lon'],
-                            'user_id': record['user_id'], 'point': 'to'}
-                       ]
-                       ]
-        df = pandas.DataFrame.from_records(all_records)
-        # df1 = df.groupby(['user_id', 'point'])[['lat', 'lon']].apply(lambda g: pandas.Series(distance.pdist(g), index=['dist']))
-        print(df.to_csv(index=False))
+        response = self.client().get('/api/v1/stats')
+
+        self.assertEqual(response.data, expected)
 
     def _post(self, url, data):
         headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
