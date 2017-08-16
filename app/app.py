@@ -19,15 +19,19 @@ def create_app(config_name):
         user_id = str(payload['user_id'])
 
         if not user_id in app.rides:
-            app.rides[user_id] = collections.deque([payload], app.N)
+            app.rides[user_id] = {
+                'rides': collections.deque([payload], app.N),
+                'total_rides': 1
+            }
         else:
-            app.rides[user_id].appendleft(payload)
+            app.rides[user_id]['rides'].appendleft(payload)
+            app.rides[user_id]['total_rides'] += 1
 
         return jsonify({'status': 'success'}), 201
 
     def _get_stats(app):
         all_records = [
-            record for user_id in app.rides for record in app.rides[user_id]]
+            record for user_id in app.rides for record in app.rides[user_id]['rides']]
         df = pandas.DataFrame.from_records(all_records)
         dist = df.apply(lambda x: pdist(
             [[x.from_lat, x.from_lon], [x.to_lat, x.to_lon]])[0], axis=1)
@@ -49,3 +53,7 @@ def create_app(config_name):
         return output
 
     return app
+
+    @app.route('/api/v1/chart', method=['GET'])
+    def chart():
+        pass 

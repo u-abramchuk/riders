@@ -21,38 +21,46 @@ class AppTestCase(unittest.TestCase):
         """Test store"""
         response = self._post('/api/v1/store', self.single_record)
         self.assertEqual(response.status_code, 201)
-        self.assertEqual(self.app.rides['1'][0], self.single_record)
+        self.assertEqual(self.app.rides['1']['rides'][0], self.single_record)
+        self.assertEqual(self.app.rides['1']['total_rides'], 1)
 
     def test_store_no_more_than_N(self):
         """Test store more than N records"""
         for i in range(0, self.app.N + 1):
             response = self._post('/api/v1/store', self.single_record)
             self.assertEqual(response.status_code, 201)
-        self.assertEqual(len(self.app.rides['1']), self.app.N)
+        self.assertEqual(len(self.app.rides['1']['rides']), self.app.N)
+        self.assertEqual(self.app.rides['1']['total_rides'], self.app.N+1)
 
     def test_stats(self):
         self.app.rides = {
-            '1': [{
-                'user_id': '1',
-                'from_lat': 30.745392,
-                'from_lon': -73.978364,
-                'to_lat': 41.308273,
-                'to_lon': -72.927887
+            '1': {
+                'rides': [{
+                    'user_id': '1',
+                    'from_lat': 30.745392,
+                    'from_lon': -73.978364,
+                    'to_lat': 41.308273,
+                    'to_lon': -72.927887
+                },
+                    {
+                    'user_id': '1',
+                    'from_lat': 40.745392,
+                    'from_lon': -73.978364,
+                    'to_lat': 41.308273,
+                    'to_lon': -72.927887
+                }],
+                'total_rides': 2
             },
-                {
-                'user_id': '1',
-                'from_lat': 40.745392,
-                'from_lon': -73.978364,
-                'to_lat': 41.308273,
-                'to_lon': -72.927887
-            }],
-            '2': [{
-                'user_id': '2',
-                'from_lat': 50.745392,
-                'from_lon': -73.978364,
-                'to_lat': 41.308273,
-                'to_lon': -72.927887
-            }]
+            '2': {
+                'rides': [{
+                    'user_id': '2',
+                    'from_lat': 50.745392,
+                    'from_lon': -73.978364,
+                    'to_lat': 41.308273,
+                    'to_lon': -72.927887
+                }],
+                'total_rides': 1
+            }
         }
         self.app.N = 10
         expected = b'from_lat,from_lon,to_lat,to_lon,user_id\n40.745392,-73.978364,41.308273,-72.927887,1\n50.745392,-73.978364,41.308273,-72.927887,2\n30.745392,-73.978364,41.308273,-72.927887,1\n'
