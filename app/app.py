@@ -4,17 +4,22 @@ import pandas
 import math
 from scipy.spatial.distance import pdist
 from .calc import distance
+import io
+from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+from matplotlib.figure import Figure
 import random
+import matplotlib.pyplot as plt
 
 
 def create_app(config_name):
     app = Flask(__name__)
+
     app.rides = {}
     app.N = 10
 
     @app.route('/')
     def index():
-        return 'index'
+        return 'riders'
 
     def _store(payload):
         user_id = str(payload['user_id'])
@@ -89,11 +94,22 @@ def create_app(config_name):
             'num_of_rides': app.rides[user_id]['total_rides'],
             'variance': 0 if app.rides[user_id]['total_rides'] == 1 else app.rides[user_id]['S'] / (app.rides[user_id]['total_rides'] - 1)
         } for user_id in app.rides]
-        print(all_records)
         df = pandas.DataFrame.from_records(all_records)
-        df.plot(x='num_of_rides', y='variance')
 
-        return 200
+        print(df)
+
+        fig, ax = plt.subplots(1)
+
+        scatterplot = df.plot.scatter(x='num_of_rides', y='variance', ax=ax)
+
+        img = io.BytesIO()
+        canvas = FigureCanvas(fig)
+        png_output = io.BytesIO()
+        canvas.print_png(png_output)
+        response = make_response(png_output.getvalue())
+        response.headers['Content-Type'] = 'image/png'
+        return response
+
     if config_name == 'development':
         print('configuring')
 
