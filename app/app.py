@@ -53,10 +53,6 @@ def create_app(config_name):
             rider['M'] = m
             rider['S'] = s
 
-            print(payload['distance'])
-            print(rider['M'])
-            print(rider['S'])
-
     @app.route('/api/v1/store', methods=['POST'])
     def store():
         payload = request.get_json()
@@ -96,11 +92,16 @@ def create_app(config_name):
         } for user_id in app.rides]
         df = pandas.DataFrame.from_records(all_records)
 
-        print(df)
-
         fig, ax = plt.subplots(1)
 
         scatterplot = df.plot.scatter(x='num_of_rides', y='variance', ax=ax)
+
+        def annotate_df(row):
+            ax.annotate(row.user_id, (row.num_of_rides, row.variance),
+                        xytext=(10, -5),
+                        textcoords='offset points')
+
+        ab = df.apply(annotate_df, axis=1)
 
         img = io.BytesIO()
         canvas = FigureCanvas(fig)
@@ -111,8 +112,6 @@ def create_app(config_name):
         return response
 
     if config_name == 'development':
-        print('configuring')
-
         def get_randomized_ride():
             return {
                 'user_id': str(round(10 * random.random())),
