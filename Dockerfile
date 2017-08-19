@@ -8,4 +8,6 @@ RUN pip install -r requirements
 
 ENV APP_SETTINGS="production"
 
+EXPOSE 5000
+
 ENTRYPOINT ["python", "run.py" ]
