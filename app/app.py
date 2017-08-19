@@ -3,12 +3,25 @@ import collections
 import pandas
 import math
 from scipy.spatial.distance import pdist
-from .calc import distance
 import io
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
 import random
 import matplotlib.pyplot as plt
+
+
+def calculate_distance(from_lat, from_lon, to_lat, to_lon):
+    def to_rad(degrees):
+        return degrees * math.pi / 180
+
+    from_lat_rad = to_rad(from_lat)
+    from_lon_rad = to_rad(from_lon)
+    to_lat_rad = to_rad(to_lat)
+    to_lon_rad = to_rad(to_lon)
+
+    R = 6371
+
+    return R * math.sqrt((from_lat_rad - to_lat_rad)**2 + (to_lon_rad - from_lon_rad)**2 * (math.cos((from_lat_rad + to_lat_rad) / 2))**2)
 
 
 def create_app(config_name):
@@ -23,7 +36,7 @@ def create_app(config_name):
 
     def _store(payload):
         user_id = str(payload['user_id'])
-        payload['distance'] = distance(
+        payload['distance'] = calculate_distance(
             payload['from_lat'],
             payload['from_lon'],
             payload['to_lat'],
