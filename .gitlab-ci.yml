@@ -1,0 +1,23 @@
+stages:
+  - test
+  # - build
+
+variables:
+  APP_IMAGE: "${CI_REGISTRY_IMAGE}:${CI_PIPELINE_ID}"
+
+test:
+  stage: test
+  image: python:3.6-alpine
+  script:
+    - python app_tests.py
+
+# build:
+#   stage: build
+#   image: docker:latest
+#   dependencies: 
+#     - test
+#   before_script:
+#     - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $CI_REGISTRY
+#   script:
+#     - docker build -t $APP_IMAGE .
+#     - docker push $APP_IMAGE
