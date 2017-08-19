@@ -7,7 +7,7 @@ variables:
 
 test:
   stage: test
-  image: python:3.6-alpine
+  image: python:3.6-slim
   script:
     - pip install -r requirements
     - python app_tests.py
