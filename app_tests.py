@@ -4,9 +4,8 @@ from app import create_app
 import pandas
 from scipy.spatial.distance import pdist
 import random
-import math
-from app.__ride_stats import calculate_distance
-from app.__rider_stats import RiderStats
+from app._ride_stats import calculate_distance
+from app._rider_stats import RiderStats
 
 
 class AppTestCase(unittest.TestCase):

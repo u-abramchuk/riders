@@ -1,7 +1,6 @@
 import collections
-import math
-from .__rider_stats import RiderStats
-from .__ride import create_ride
+from ._rider_stats import RiderStats
+from ._ride import create_ride
 
 
 class Rider:

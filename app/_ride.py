@@ -1,5 +1,5 @@
 import collections
-from .__ride_stats import calculate_distance
+from ._ride_stats import calculate_distance
 
 Ride = collections.namedtuple(
     'Ride', 'from_lat, from_lon, to_lat, to_lon, distance, user_id')

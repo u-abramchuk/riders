@@ -1,4 +1,4 @@
-from .__rider import Rider
+from ._rider import Rider
 
 
 class Store:

@@ -1,17 +1,13 @@
 from flask import Flask, request, jsonify, make_response
-import collections
 import pandas
-import math
 from scipy.spatial.distance import pdist
 import io
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
-import random
 import matplotlib.pyplot as plt
 from collections import namedtuple
-from .__rider import Rider
-from .__store import Store
-from .__bootstrapper import bootstrap
+from ._store import Store
+from ._bootstrapper import bootstrap
 
 
 def create_app():
@@ -65,7 +61,9 @@ def create_app():
         df = pandas.DataFrame.from_records(all_riders)
 
         fig, ax = plt.subplots(1)
-        scatterplot = df.plot.scatter(x='num_of_rides', y='variance', ax=ax)
+        
+        if not df.empty:
+            scatterplot = df.plot.scatter(x='num_of_rides', y='variance', ax=ax)
 
         def annotate_df(row):
             ax.annotate(row.user_id, (row.num_of_rides, row.variance),
