@@ -8,6 +8,8 @@ variables:
 test:
   stage: test
   image: python:3.6
+  veriables:
+    APP_SETTINGS: ../config/testing.config
   script:
     - pip install -r requirements
     - python app_tests.py
