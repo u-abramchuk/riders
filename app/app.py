@@ -8,75 +8,34 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
 import random
 import matplotlib.pyplot as plt
+from collections import namedtuple
+from .__rider import Rider
+from .__store import Store
+from .__bootstrapper import bootstrap
 
 
-def calculate_distance(from_lat, from_lon, to_lat, to_lon):
-    def to_rad(degrees):
-        return degrees * math.pi / 180
-
-    from_lat_rad = to_rad(from_lat)
-    from_lon_rad = to_rad(from_lon)
-    to_lat_rad = to_rad(to_lat)
-    to_lon_rad = to_rad(to_lon)
-
-    R = 6371
-
-    return R * math.sqrt((from_lat_rad - to_lat_rad)**2 + (to_lon_rad - from_lon_rad)**2 * (math.cos((from_lat_rad + to_lat_rad) / 2))**2)
-
-
-def create_app(config_name):
+def create_app():
     app = Flask(__name__)
 
-    app.rides = {}
-    app.N = 10
+    app.config.from_envvar('APP_SETTINGS')
+    app.N = app.config['N']
+    app.store = Store(app.N)
 
     @app.route('/')
     def index():
         return 'riders'
 
-    def _store(payload):
-        user_id = str(payload['user_id'])
-        payload['distance'] = calculate_distance(
-            payload['from_lat'],
-            payload['from_lon'],
-            payload['to_lat'],
-            payload['to_lon']
-        )
-
-        if not user_id in app.rides:
-            app.rides[user_id] = {
-                'rides': collections.deque([payload], app.N),
-                'total_rides': 1,
-                'M': payload['distance'],
-                'S': 0
-            }
-        else:
-            rider = app.rides[user_id]
-            dist = payload['distance']
-            total_rides = rider['total_rides']
-            old_m = rider['M']
-            old_s = rider['S']
-
-            total_rides += 1
-            m = old_m + (dist - old_m) / total_rides
-            s = old_s + (dist - old_m) * (dist - m)
-
-            rider['rides'].append(payload)
-            rider['total_rides'] = total_rides
-            rider['M'] = m
-            rider['S'] = s
-
     @app.route('/api/v1/store', methods=['POST'])
     def store():
         payload = request.get_json()
-        _store(payload)
+        app.store.store(payload)
 
         return jsonify({'status': 'success'}), 201
 
     def _get_stats(app):
         all_records = [
-            record for user_id in app.rides
-            for record in app.rides[user_id]['rides']
+            record._asdict() for user_id in app.store.riders
+            for record in app.store.riders[user_id].rides
         ]
         df = pandas.DataFrame.from_records(all_records)
 
@@ -98,15 +57,14 @@ def create_app(config_name):
 
     @app.route('/api/v1/chart', methods=['GET'])
     def chart():
-        all_records = [{
+        all_riders = [{
             'user_id': user_id,
-            'num_of_rides': app.rides[user_id]['total_rides'],
-            'variance': 0 if app.rides[user_id]['total_rides'] == 1 else app.rides[user_id]['S'] / (app.rides[user_id]['total_rides'] - 1)
-        } for user_id in app.rides]
-        df = pandas.DataFrame.from_records(all_records)
+            'num_of_rides': app.store.riders[user_id].stats.rides_count,
+            'variance': app.store.riders[user_id].stats.get_variance()
+        } for user_id in app.store.riders]
+        df = pandas.DataFrame.from_records(all_riders)
 
         fig, ax = plt.subplots(1)
-
         scatterplot = df.plot.scatter(x='num_of_rides', y='variance', ax=ax)
 
         def annotate_df(row):
@@ -115,29 +73,18 @@ def create_app(config_name):
                         textcoords='offset points')
 
         ab = df.apply(annotate_df, axis=1)
-
         img = io.BytesIO()
         canvas = FigureCanvas(fig)
         png_output = io.BytesIO()
         canvas.print_png(png_output)
+
         response = make_response(png_output.getvalue())
         response.headers['Content-Type'] = 'image/png'
+        
         return response
 
-    if config_name == 'development':
-        def get_randomized_ride():
-            return {
-                'user_id': str(round(10 * random.random())),
-                'from_lat': 40.745392 + random.random() / 10,
-                'from_lon': -73.978364 + random.random() / 10,
-                'to_lat': 41.308273 + random.random() / 10,
-                'to_lon': -72.927887 + random.random() / 10
-            }
-
-        records = [get_randomized_ride() for i in range(0, 300)]
-
-        for i in range(0, 300):
-            single_record = records[i]
-            _store(single_record)
+    if app.config['DEVELOPMENT']:
+        # generate some sample data
+        bootstrap(app)
 
     return app

@@ -6,7 +6,7 @@ WORKDIR /app
 
 RUN pip install -r requirements
 
-ENV APP_SETTINGS="production"
+ENV APP_SETTINGS="../config/development.config"
 
 EXPOSE 5000
 

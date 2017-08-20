@@ -5,12 +5,32 @@ import pandas
 from scipy.spatial.distance import pdist
 import random
 import math
+from app.__ride_stats import calculate_distance
+from app.__rider_stats import RiderStats
 
 
 class AppTestCase(unittest.TestCase):
     def setUp(self):
-        self.app = create_app(config_name="testing")
+        self.app = create_app()
         self.client = self.app.test_client
+
+    def test_distance_calculation(self):
+        ride = {
+            'user_id': '1',
+            'from_lat': 40.745392,
+            'from_lon': -73.978364,
+            'to_lat': 41.308273,
+            'to_lon': -72.927887
+        }
+        distance = calculate_distance(ride)
+        self.assertEqual(distance, 108.0859922018123)
+
+    def test_variance_calculation(self):
+        distances = [108.085992,112.438246,195.151068]
+        stats = RiderStats()
+        for distance in distances:
+            stats.new_ride(distance)
+        self.assertAlmostEqual(stats.get_variance(), 2406.7800828283)
 
     def test_store(self):
         """Test store"""
@@ -25,15 +45,14 @@ class AppTestCase(unittest.TestCase):
         response = self._post('/api/v1/store', single_record)
 
         self.assertEqual(response.status_code, 201)
+        self.assertEqual(self.app.store.riders['1'].stats.rides_count, 1)
 
-        self.assertEqual(self.app.rides['1']['total_rides'], 1)
-
-        record = self.app.rides['1']['rides'][0]
-        self.assertEqual(record['from_lat'], single_record['from_lat'])
-        self.assertEqual(record['from_lon'], single_record['from_lon'])
-        self.assertEqual(record['to_lat'], single_record['to_lat'])
-        self.assertEqual(record['to_lon'], single_record['to_lon'])
-        self.assertAlmostEqual(record['distance'], 108.0859922018123)
+        ride = self.app.store.riders['1'].rides[0]
+        self.assertEqual(ride.from_lat, single_record['from_lat'])
+        self.assertEqual(ride.from_lon, single_record['from_lon'])
+        self.assertEqual(ride.to_lat, single_record['to_lat'])
+        self.assertEqual(ride.to_lon, single_record['to_lon'])
+        self.assertAlmostEqual(ride.distance, 108.0859922018123)
 
     def test_store_no_more_than_N(self):
         """Test store more than N records"""
@@ -55,14 +74,15 @@ class AppTestCase(unittest.TestCase):
             self.assertEqual(response.status_code, 201)
 
         for i in range(0, self.app.N):
-            actual = self.app.rides['1']['rides'][i]
+            rider = self.app.store.riders['1']
+            actual = rider.rides[i]
             expected = records[i + 1]
-            self.assertEqual(actual['from_lat'], expected['from_lat'])
-            self.assertEqual(actual['from_lon'], expected['from_lon'])
-            self.assertEqual(actual['to_lat'], expected['to_lat'])
-            self.assertEqual(actual['to_lon'], expected['to_lon'])
-        self.assertEqual(len(self.app.rides['1']['rides']), self.app.N)
-        self.assertEqual(self.app.rides['1']['total_rides'], self.app.N + 1)
+            self.assertEqual(actual.from_lat, expected['from_lat'])
+            self.assertEqual(actual.from_lon, expected['from_lon'])
+            self.assertEqual(actual.to_lat, expected['to_lat'])
+            self.assertEqual(actual.to_lon, expected['to_lon'])
+        self.assertEqual(len(rider.rides), self.app.N)
+        self.assertEqual(rider.stats.rides_count, self.app.N + 1)
 
     def test_stats(self):
         rides = [
