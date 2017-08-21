@@ -7,6 +7,7 @@ WORKDIR /app
 RUN pip install -r requirements
 
 ENV APP_SETTINGS="../config/development.config"
+ENV DISPLAY=:0.0
 
 EXPOSE 5000
 
