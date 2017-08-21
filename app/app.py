@@ -2,6 +2,10 @@ from flask import Flask, request, jsonify, make_response
 import pandas
 from scipy.spatial.distance import pdist
 import io
+
+import matplotlib
+matplotlib.use('Agg')
+
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
@@ -9,8 +13,6 @@ from collections import namedtuple
 from ._store import Store
 from ._bootstrapper import bootstrap
 
-import matplotlib
-matplotlib.use('Agg')
 
 def create_app():
     app = Flask(__name__)
@@ -63,9 +65,10 @@ def create_app():
         df = pandas.DataFrame.from_records(all_riders)
 
         fig, ax = plt.subplots(1)
-        
+
         if not df.empty:
-            scatterplot = df.plot.scatter(x='num_of_rides', y='variance', ax=ax)
+            scatterplot = df.plot.scatter(
+                x='num_of_rides', y='variance', ax=ax)
 
         def annotate_df(row):
             ax.annotate(row.user_id, (row.num_of_rides, row.variance),
@@ -80,7 +83,7 @@ def create_app():
 
         response = make_response(png_output.getvalue())
         response.headers['Content-Type'] = 'image/png'
-        
+
         return response
 
     if app.config['DEVELOPMENT']:
