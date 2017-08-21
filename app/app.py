@@ -9,6 +9,7 @@ from collections import namedtuple
 from ._store import Store
 from ._bootstrapper import bootstrap
 
+import matplotlib
 matplotlib.use('Agg')
 
 def create_app():
